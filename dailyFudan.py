@@ -235,6 +235,15 @@ class Zlapp(Fudan):
                 captcha.reportError()
                 print('captcha.reportError')
 
+def f_decode(lc_psw):
+    if lc_psw.startswith('|||base64|||'):
+        from base64 import b64decode
+        lc_psw = lc_psw[12:]
+        lc_psw = b64decode(lc_psw)
+        lc_psw = lc_psw.decode(encoding = 'utf-8')
+    return lc_psw
+
+
 def get_account():
     """
     获取账号信息
@@ -262,7 +271,8 @@ if __name__ == '__main__':
             pass
         logging.error("请按readme操作，以正确完成配置～\n")
         sys_exit(1)
-
+    psw = f_decode(psw)
+    pwd = f_decode(pwd)
     # logging.debug("ACCOUNT：" + uid + psw)
     zlapp_login = 'https://uis.fudan.edu.cn/authserver/login?' \
                   'service=https://zlapp.fudan.edu.cn/site/ncov/fudanDaily'
