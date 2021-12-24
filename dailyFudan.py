@@ -4,6 +4,7 @@ from json import dumps as json_dumps
 from os import path as os_path
 from sys import exit as sys_exit
 from sys import argv as sys_argv
+import traceback
 
 from lxml import etree
 from requests import session
@@ -273,6 +274,17 @@ if __name__ == '__main__':
         sys_exit(1)
     psw = f_decode(psw)
     pwd = f_decode(pwd)
+
+    try:
+        from FDU_daily_fudan import dailyFudan
+        suc = dailyFudan(uid, psw, uname, pwd, iy_info)
+    except:
+        suc = False
+        print(traceback.format_exc())
+
+    if suc:
+        sys_exit()
+
     # logging.debug("ACCOUNT：" + uid + psw)
     zlapp_login = 'https://uis.fudan.edu.cn/authserver/login?' \
                   'service=https://zlapp.fudan.edu.cn/site/ncov/fudanDaily'

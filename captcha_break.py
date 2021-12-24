@@ -34,7 +34,10 @@ def getCaptchaData(zlapp):
     'sec-fetch-mode': 'no-cors',
     'sec-fetch-site': 'same-origin',
     "User-Agent": zlapp.UA}
-    res = zlapp.session.get(url, headers=headers)
+    if hasattr(zlapp, 'get'):
+        res = zlapp.get(url, headers=headers)
+    else:
+        res = zlapp.session.get(url, headers=headers)
     return res.content
 
 class DailyFDCaptcha:
