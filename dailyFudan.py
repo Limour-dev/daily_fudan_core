@@ -187,6 +187,7 @@ class Zlapp(Fudan):
         else:
             logging.info("未提交")
             self.last_info = last_info["d"]["info"]
+            self.old_info = last_info["d"]["oldInfo"]
             return False
 
     def checkin(self, captcha):
@@ -222,7 +223,7 @@ class Zlapp(Fudan):
             captcha_text = captcha()
             #captcha_text = 'abcd'
             self.last_info.update({
-                'sfzx': s_sfzx(self.last_info),
+                'sfzx': s_sfzx(self.old_info),
                 'code': captcha_text
             })
             save = self.session.post(
@@ -230,9 +231,8 @@ class Zlapp(Fudan):
                     data=self.last_info,
                     headers=headers,
                     allow_redirects=False)
-
+            logging.info(save.text)
             save_msg = json_loads(save.text)["m"]
-            logging.info(save_msg)
             if save_msg != '验证码错误':
                 break
             else:
@@ -269,9 +269,9 @@ if __name__ == '__main__':
     if Check_value:
         def s_sfzx(last_info):
             print(f"last_info sfzx {last_info.get('sfzx')}")
-            return last_info.get('sfzx', 1)
+            return last_info.get('sfzx', "1")
     else:
-        s_sfzx = lambda x: 1
+        s_sfzx = lambda x: "1"
     if IYUU_TOKE: #有token则通知，无token不通知
         if len(IYUU_TOKE) != 3:
             logging.error("请正确配置微信通知功能和验证码打码功能～\n")

@@ -41,8 +41,9 @@ def check():
         return True
     else:
         print("未提交(WebVPN)")
-        global _last_info
+        global _last_info, _old_info
         _last_info = last_info["d"]["info"]
+        _old_info = last_info["d"]["oldInfo"]
         return False
 
 def checkin(captcha):
@@ -68,7 +69,7 @@ def checkin(captcha):
         captcha_text = captcha()
         #captcha_text = 'abcd'
         _last_info.update({
-            'sfzx': s_sfzx(_last_info),
+            'sfzx': s_sfzx(_old_info),
             'code': captcha_text
         })
         save = vpn.post(
@@ -76,9 +77,8 @@ def checkin(captcha):
                 data=_last_info,
                 headers=headers,
                 allow_redirects=False)
-
+        print(save.text)
         save_msg = json_loads(save.text)["m"]
-        print(save_msg)
         if save_msg != '验证码错误':
             break
         else:
@@ -90,7 +90,7 @@ def dailyFudan(uid, psw, uname, pwd, info, lc_s_sfzx=None):
     if lc_s_sfzx:
         s_sfzx = lc_s_sfzx
     else:
-        s_sfzx = lambda x: 1
+        s_sfzx = lambda x: "1"
     vpn = WebVPN()
     try:
         if 'token-login' not in vpn.login(uid, psw):
