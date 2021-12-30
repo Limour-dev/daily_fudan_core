@@ -6,6 +6,8 @@ from sys import exit as sys_exit
 from sys import argv as sys_argv
 import traceback
 
+from py_sha2 import sha256
+
 from lxml import etree
 from requests import session
 import logging
@@ -23,6 +25,7 @@ def iyuu(IYUU_TOKEN):
     url = f"https://iyuu.cn/{IYUU_TOKEN}.send"
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     def send(text, desp=""):
+        desp = f'该脚本打卡会强制修改为在校状态，非在校同学切勿使用！！！\n{desp}'
         Form = {'text': text, 'desp': desp}
         return requests.post(url, data=Form, headers=headers, verify=False)
     return send
@@ -219,7 +222,7 @@ class Zlapp(Fudan):
             captcha_text = captcha()
             #captcha_text = 'abcd'
             self.last_info.update({
-                'sfzx': 1,
+                'sfzx': s_sfzx(self.last_info),
                 'code': captcha_text
             })
             save = self.session.post(
@@ -250,11 +253,25 @@ def get_account():
     获取账号信息
     """
     uid, psw, *IYUU_TOKEN = sys_argv[1].strip().split(' ')
+    global Check_value
+    Check_value = False
+    if len(IYUU_TOKEN) == 4:
+        # https://tool.oschina.net/encrypt?type=2
+        Check_value = IYUU_TOKEN.pop()
+        statement = f'{uid}认同平安复旦对抗疫的重要意义，将自觉遵守防疫政策；{uid}仅在长期停留原处时使用本代码以减少不必要的劳动；{uid}如有出行，将立即手动更新自己的位置信息；如出现任何违反防疫政策的行为，{uid}同意自己承担全部责任。'
+        Check_value = (sha256(statement, True) == Check_value)
     return uid, psw, IYUU_TOKEN
 
 gl_info = "快去手动填写！"
 if __name__ == '__main__':
     uid, psw, IYUU_TOKE = get_account()
+    print(f'Check_value: {Check_value}')
+    if Check_value:
+        def s_sfzx(last_info):
+            print(f"last_info sfzx {last_info.get('sfzx')}")
+            return last_info.get('sfzx', 1)
+    else:
+        s_sfzx = lambda x: 1
     if IYUU_TOKE: #有token则通知，无token不通知
         if len(IYUU_TOKE) != 3:
             logging.error("请正确配置微信通知功能和验证码打码功能～\n")
@@ -277,7 +294,7 @@ if __name__ == '__main__':
 
     try:
         from FDU_daily_fudan import dailyFudan
-        suc = dailyFudan(uid, psw, uname, pwd, iy_info)
+        suc = dailyFudan(uid, psw, uname, pwd, iy_info, s_sfzx)
     except:
         suc = False
         print(traceback.format_exc())

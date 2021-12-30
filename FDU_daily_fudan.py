@@ -16,6 +16,8 @@ def set_q(iterO):
     return res
 
 def check():
+##    test_info = {'sfzx':0}
+##    print(s_sfzx(test_info))
     headers = {
         "accept": "application/json, text/plain, */*",
         "accept-encoding": "gzip, deflate, br",
@@ -66,7 +68,7 @@ def checkin(captcha):
         captcha_text = captcha()
         #captcha_text = 'abcd'
         _last_info.update({
-            'sfzx': 1,
+            'sfzx': s_sfzx(_last_info),
             'code': captcha_text
         })
         save = vpn.post(
@@ -83,8 +85,12 @@ def checkin(captcha):
             captcha.reportError()
             print('captcha.reportError')
 
-def dailyFudan(uid, psw, uname, pwd, info):
-    global vpn
+def dailyFudan(uid, psw, uname, pwd, info, lc_s_sfzx=None):
+    global vpn, s_sfzx
+    if lc_s_sfzx:
+        s_sfzx = lc_s_sfzx
+    else:
+        s_sfzx = lambda x: 1
     vpn = WebVPN()
     try:
         if 'token-login' not in vpn.login(uid, psw):
