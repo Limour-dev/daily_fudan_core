@@ -57,7 +57,8 @@ import http.cookies as Cookie
 class WebVPN:
     refresh = '0'
     login_url = 'https://webvpn.fudan.edu.cn/login?cas_login=true'
-    logout_url = 'https://uis.fudan.edu.cn/authserver/logout?service=/authserver/login'
+    logout_url = 'https://webvpn.fudan.edu.cn/logout'
+    logout_uis = 'https://uis.fudan.edu.cn/authserver/logout?service=/authserver/login'
     api_ip = 'http://ip-api.com/json/?fields=258047&lang=en'
     def setProxy(self, proxy_url):
         '''
@@ -70,7 +71,7 @@ class WebVPN:
         self.session.proxies.update(proxies)
 
     def setUA(self, UA=UA_Chrome):
-        self.UA = UA_Chrome
+        self.UA = UA
 
     def update_headers(self, headers):
         if 'User-Agent' not in headers:
@@ -154,7 +155,10 @@ class WebVPN:
         """
         执行登出
         """
-        expire = self.get(self.logout_url).headers.get('Set-Cookie')
+        expire = self.get(self.logout_uis).headers.get('Set-Cookie')
+        expire += self.get(self.logout_url).headers.get('Set-Cookie')
+        if '01-Jan-1970' in expire:
+            return True
         return  expire
 
     def close(self):
@@ -180,7 +184,7 @@ class WebVPN:
             "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7"
         }
         c = self.get(qurl, headers=headers)
-        if c.ok and 'text' in c.headers['Content-Type']:
+        if c.ok and 'text' in c.headers.get('Content-Type'):
             return c.text
         return c
 
