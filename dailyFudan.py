@@ -30,6 +30,8 @@ def iyuu(IYUU_TOKEN):
         return requests.post(url, data=Form, headers=headers, verify=False)
     return send
 
+from ServerChan import ftqq
+
 # fix random area bug
 def set_q(iterO):
     res = list()
@@ -281,6 +283,8 @@ if __name__ == '__main__':
         IYUU_TOKE = IYUU_TOKE[0]
         if IYUU_TOKE.startswith('IYUU'):
             iy_info = iyuu(IYUU_TOKE)
+        elif IYUU_TOKE.startswith('SCT'):
+            iy_info = ftqq(IYUU_TOKE)
         else:
             def iy_info(text, desp=""):
                 pass
