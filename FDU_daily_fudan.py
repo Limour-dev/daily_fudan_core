@@ -31,7 +31,11 @@ def check():
     position = last_info["d"]["info"]['geo_api_info']
     position = json_loads(position)
     print(f'上一次提交日期为(WebVPN): {last_info["d"]["info"]["date"]}')
-    print(f'上一次提交地址为(WebVPN): {position["formattedAddress"]}')
+    
+    if s_sfzx.__name__ == '<lambda>':
+        print(f'上一次提交地址为(WebVPN): {position["formattedAddress"]}')
+    else:
+        print(f'上一次提交地址为(WebVPN): ***')
     
     today = time.strftime("%Y%m%d", time.localtime())
     if last_info["d"]["info"]["date"] == today:

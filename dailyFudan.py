@@ -168,7 +168,10 @@ class Zlapp(Fudan):
         position = last_info["d"]["info"]['geo_api_info']
         position = json_loads(position)
 
-        logging.info("上一次提交地址为: %s" % position['formattedAddress'])
+        if s_sfzx.__name__ == '<lambda>':
+            logging.info("上一次提交地址为: %s" % position['formattedAddress'])
+        else:
+            logging.info("上一次提交地址为: ***" )
         # logging.debug("上一次提交GPS为", position["position"])
 
         today = time.strftime("%Y%m%d", time.localtime())
