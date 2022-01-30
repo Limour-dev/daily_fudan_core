@@ -1,5 +1,7 @@
 from aes_cfb import getCiphertext, getPlaintext
 from binascii import hexlify, unhexlify
+from urllib.parse import quote
+from time import sleep
 
 key_ = b'wrdvpnisthebest!'
 iv_  = b'wrdvpnisthebest!'
@@ -147,9 +149,37 @@ class WebVPN:
                 allow_redirects=True)
 
         if post.history:
-            return post.history[-1].url
-        
+            if 'ticket=' in post.url:
+                return self.ct_login(uid, post)
+            else:
+                return post.history[-1].url
         return post
+
+    def ct_login(self, uid, rps):
+        fix1 = 'https://webvpn.fudan.edu.cn/wengine-vpn/input'
+        data = {
+            'name': "username",
+            'type': "text",
+            'value': uid
+            }
+        headers = {
+            'origin': 'https://webvpn.fudan.edu.cn',
+            'referer': 'https://webvpn.fudan.edu.cn/https/77726476706e69737468656265737421e5fe52d221256c5170468ca88d1b203b/authserver/login?service=https%3A%2F%2Fwebvpn.fudan.edu.cn%2Flogin%3Fcas_login%3Dtrue'
+            }
+        self.post(fix1, headers=headers, data=data)
+        for i in range(20): # ??? 为什么要多次尝试登录才能进 ???
+            sleep(0.3)
+            page_login = self.get(self.login_url,allow_redirects=True)
+            if page_login.url == 'https://webvpn.fudan.edu.cn/':
+                return 'token-login'
+            html = etree.HTML(page_login.text, etree.HTMLParser())
+            captcha = html.xpath("//img[@class='captcha-img']/@src")
+            if len(captcha) != 1:
+                return page_login
+            captcha = captcha[0]
+            captcha = self.get('https://webvpn.fudan.edu.cn'+captcha, allow_redirects=True)
+        res = page_login
+        return res
 
     def logout(self):
         """
@@ -169,7 +199,7 @@ class WebVPN:
         self.session.close()
         return ret    
 
-    def cookie(self, url='',  method:['get','post']='get', host='', path='', scheme='https'):
+    def cookie(self, url='',  method:['get','set']='get', host='', path='', scheme='https', ck_data=''):
         if url:
             parts = url.split('://')
             scheme = parts[0]
@@ -177,7 +207,11 @@ class WebVPN:
             hosts = add.split('/')
             host = hosts[0]
             path = '/' + '/'.join(hosts[1:])
-        qurl = r'https://webvpn.fudan.edu.cn/wengine-vpn/cookie?' + f'method={method}&host={host}&scheme={scheme}&path={path}&vpn_timestamp={getTimestamp()}' 
+        qurl = r'https://webvpn.fudan.edu.cn/wengine-vpn/cookie?' + f'method={method}&host={host}&scheme={scheme}&path={path}' 
+        if method == 'get':
+            qurl += f'&vpn_timestamp={getTimestamp()}'
+        else:
+            qurl += f'&ck_data={quote(ck_data)}'
         headers = {
             "accept": "*/*",
             "accept-encoding": "gzip, deflate, br",
