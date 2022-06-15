@@ -112,8 +112,83 @@ class WebVPN:
         if not url.startswith('https://webvpn.fudan.edu.cn'):
             url = getVPNUrl(url)
         return self.session.post(url, *arg, headers=headers, **kw)
+    def login_uis(self, uid, psw):
+        login_url = 'https://uis.fudan.edu.cn/authserver/login'
+        page_login = self.session.get(login_url)
+        if page_login.status_code != 200:
+            return False
+        html = etree.HTML(page_login.text, etree.HTMLParser())
+        data = {
+            "username": uid,
+            "password": psw,
+        }
+        # 获取登录页上的令牌
+        data.update(
+                zip(
+                        html.xpath("/html/body/form/input/@name"),
+                        html.xpath("/html/body/form/input/@value")
+                )
+        )
+        headers = {
+            "Host"      : "uis.fudan.edu.cn",
+            "Origin"    : "https://uis.fudan.edu.cn",
+            "Referer"   : login_url,
+            "User-Agent": self.UA
+        }
+        post = self.session.post(
+                login_url,
+                data=data,
+                headers=headers,
+                allow_redirects=False)
+        return post
+    def logout_uis(self):
+        exit_url = 'https://uis.fudan.edu.cn/authserver/logout'
+        expire = self.session.get(exit_url).headers.get('Set-Cookie')
+        return expire
+    
+    def login_webvpn(self):
+        login_url = 'https://webvpn.fudan.edu.cn/login?cas_login=true'
+        get = self.session.get(login_url, allow_redirects=True)
+        return get
+    def logout_webvpn(self):
+        exit_url = 'https://webvpn.fudan.edu.cn/logout'
+        return self.session.get(exit_url, allow_redirects=False)
 
-    def login(self, uid, psw):
+    def login_uis_by_webvpn(self, uid, psw):
+        login_url = 'https://uis.fudan.edu.cn/authserver/login'
+        page_login = self.get(login_url)
+        if page_login.status_code != 200:
+            return False
+        html = etree.HTML(page_login.text, etree.HTMLParser())
+        data = {
+            "username": uid,
+            "password": psw,
+        }
+        # 获取登录页上的令牌
+        data.update(
+                zip(
+                        html.xpath("/html/body/form/input/@name"),
+                        html.xpath("/html/body/form/input/@value")
+                )
+        )
+        headers = {
+            "Origin"    : "https://uis.fudan.edu.cn",
+            "Referer"   : login_url,
+            "User-Agent": self.UA
+        }
+        post = self.post(
+                login_url,
+                data=data,
+                headers=headers,
+                allow_redirects=False)
+        return post
+        
+    def logout_uis_by_webvpn(self):
+        exit_url = 'https://uis.fudan.edu.cn/authserver/logout'
+        expire = self.get(exit_url)
+        return self.cookie(exit_url)
+    
+    def login_old(self, uid, psw):
         page_login = self.get(self.login_url,allow_redirects=False)
         if not page_login.is_redirect:
             return False
@@ -181,7 +256,7 @@ class WebVPN:
         res = page_login
         return res
 
-    def logout(self):
+    def logout_old(self):
         """
         执行登出
         """
@@ -218,8 +293,11 @@ class WebVPN:
             "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7"
         }
         c = self.get(qurl, headers=headers)
-        if c.ok and 'text' in c.headers.get('Content-Type'):
-            return c.text
+        try:
+            if c.ok and 'text' in c.headers.get('Content-Type'):
+                return c.text
+        except:
+            pass
         return c
 
     def show(self, url):
@@ -231,15 +309,37 @@ class WebVPN:
         if ip.ok and 'json' in ip.headers.get('Content-Type'):
             return ip.json()
         return ip
-    
-def show(b):
-    with open('nmb.txt','wb') as f:
-        f.write(b.content)
-
-##a = WebVPN()
-##print(a.login('1930***', '***'))
-##b = a.get('https://uis.fudan.edu.cn/authserver/login?service=https%3A%2F%2Ftac.fudan.edu.cn%2Foauth2%2Fauthorize.act%3Fclient_id%3Ddfcf8459-6973-42d3-b9f1-3e283f18f0bb%26response_type%3Dcode%26state%3Dd90d7a1f02dc483f9fe8be6bbe9db8f6%26redirect_uri%3Dhttp%253A%252F%252Fce.fudan.edu.cn%252Fcallbackurl.aspx')
-##b = a.get('http://ce.fudan.edu.cn/API/Admin/DailyFeedback/FeedbackStudent.ashx?vpn-12-o1-ce.fudan.edu.cn&action=query&semester=2021-2022-1&searchName=&type=1&v=1640366108462&index=1&psize=15&orderby=&col=&ordertype=&order=')
-##print(a.cookie('http://ce.fudan.edu.cn/Admin/DailyFeedback/Student/DailyFeedbackList.aspx'))
-##show(b)
-##print(a.close())
+    def login(self, uid, psw):
+        for i in range(3):
+            st1 = self.login_uis(uid, psw)
+            if st1.is_redirect and st1.next.url.endswith('index.do'):
+                break
+            sleep(0.3)
+        else:
+            return 'uis failed'
+        
+        for i in range(10):
+            sleep(0.3)
+            st2 = self.login_webvpn()
+            if st2.history and (('ticket=' in st2.url) or ('ticket=' in st2.history[-1].url)):
+                break
+        else:
+            return 'webvpn failed'
+        
+        for i in range(3):
+            sleep(0.3)
+            st3 = self.login_uis_by_webvpn(uid, psw)
+            if st1.is_redirect and st1.next.url.endswith('index.do'):
+                break
+        else:
+            return 'uis_by_webvpn failed'
+        
+        return 'token-login'
+        return (st1, st2, st3)
+        
+    def logout(self):
+        self.logout_uis_by_webvpn()
+        sleep(0.3)
+        self.logout_webvpn()
+        sleep(0.3)
+        self.logout_uis()
