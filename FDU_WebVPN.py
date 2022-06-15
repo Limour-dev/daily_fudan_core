@@ -329,7 +329,7 @@ class WebVPN:
         for i in range(3):
             sleep(0.3)
             st3 = self.login_uis_by_webvpn(uid, psw)
-            if st1.is_redirect and st1.next.url.endswith('index.do'):
+            if st3.is_redirect and st3.next.url.endswith('index.do'):
                 break
         else:
             return 'uis_by_webvpn failed'
