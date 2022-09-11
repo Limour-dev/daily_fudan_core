@@ -270,7 +270,7 @@ def get_account():
 gl_info = "快去手动填写！"
 if __name__ == '__main__':
     uid, psw, IYUU_TOKE = get_account()
-    print(f'Check_value: {Check_value}')
+    # print(f'Check_value: {Check_value}')
     if Check_value:
         def s_sfzx(last_info):
             print(f"last_info sfzx {last_info.get('sfzx')}")
