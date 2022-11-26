@@ -9,7 +9,12 @@ def base64_api(uname, pwd, img, typeid):
     base64_data = base64.b64encode(img)
     b64 = base64_data.decode()
     data = {"username": uname, "password": pwd, "typeid": typeid, "image": b64}
-    result = json.loads(requests.post("http://api.ttshitu.com/predict", json=data).text)
+    try:
+        result = json.loads(requests.post("https://api.ttshitu.com/predict", json=data).text)
+    except:
+        import traceback
+        print(traceback.format_exc())
+        result = json.loads(requests.post("http://api.ttshitu.com/predict", json=data).text)
     return result
 
 def reportError(id):
