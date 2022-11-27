@@ -4,6 +4,7 @@ import sys
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+from time import sleep
 
 def base64_api(uname, pwd, img, typeid):
     base64_data = base64.b64encode(img)
@@ -43,6 +44,7 @@ def getCaptchaData(zlapp):
         res = zlapp.get(url, headers=headers)
     else:
         res = zlapp.session.get(url, headers=headers)
+    sleep(1)
     return res.content
 
 class DailyFDCaptcha:
@@ -61,6 +63,21 @@ class DailyFDCaptcha:
         self.pwd = pwd
         self.info = info_callback
     def __call__(self):
+        if(self.id == 0 or not (queryAccountInfo(self.uname, self.pwd))):
+            self.id = 'local'
+            print('captcha_break by dddd_ocr')
+            try:
+                from captcha_break_dddd import dddd
+                for i in range(3):
+                    img = getCaptchaData(self.zlapp)
+                    result = dddd(img)
+                    if len(result) == 4:
+                        return result
+            except:
+                import traceback
+                print(traceback.format_exc())
+                
+        print('captcha_break by ttshitu')
         img = getCaptchaData(self.zlapp)
         result = base64_api(self.uname,self.pwd,img,self.typeid)
         print(result)
@@ -70,31 +87,30 @@ class DailyFDCaptcha:
         else:
             self.info(result["message"])
     def reportError(self):
-        if self.id != 0:
-            self.info(reportError(self.id))
-    
+        try:
+            if (self.id != 0) and (self.id != 'local'):
+                self.info(reportError(self.id))
+        except:
+            import traceback
+            print(traceback.format_exc())
+
+def queryAccountInfo(uname, pwd):
+    try:
+        result = json.loads(requests.get(f'https://api.ttshitu.com/queryAccountInfo.json?username={uname}&password={pwd}').text)
+        print(result)
+        if result['success']:
+            successNum = int(result['data']['successNum'])
+            if successNum <= 1:
+                successNum = 1
+            failNum = int(result['data']['failNum'])
+            print(f'ttshitu 识别准确率：{successNum / (successNum + failNum) * 100:.2f}%')
+            return float(result['data']['balance']) > 0.01
+        else:
+            return False
+    except:
+        import traceback
+        print(traceback.format_exc())
+        return False
+
 if __name__ == "__main__":
-    def base64_api(uname, pwd, img, typeid):
-        return {
-            "success": False,
-            "code": "-1",
-            "message": "用户名或密码错误",
-            "data": ""
-        }
-    print(base64_api(0,0,0,0))
-    test = DailyFDCaptcha(0,0,0,print)
-    test(0)
-    def base64_api(uname, pwd, img, typeid):
-        return {
-            "success": True,
-            "code": "0",
-            "message": "success",
-            "data": {
-                "result": "hhum",
-                "id": "00504808e68a41ad83ab5c1e6367ae6b"
-            }
-        }
-    print(test(0))
-    def reportError(id):
-        return id
-    test.reportError()
+    from captcha_break_dddd import dddd
