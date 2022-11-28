@@ -2,6 +2,8 @@ from aes_cfb import getCiphertext, getPlaintext
 from binascii import hexlify, unhexlify
 from urllib.parse import quote
 from time import sleep
+from os import environ
+print(environ['OPENSSL_CONF'])
 
 key_ = b'wrdvpnisthebest!'
 iv_  = b'wrdvpnisthebest!'

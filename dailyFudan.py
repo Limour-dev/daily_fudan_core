@@ -1,7 +1,9 @@
+from os import path as os_path
+import os
+os.environ['OPENSSL_CONF'] = os_path.join(os.getcwd(), 'openssl.cnf')
 import time
 from json import loads as json_loads
 from json import dumps as json_dumps
-from os import path as os_path
 from sys import exit as sys_exit
 from sys import argv as sys_argv
 import traceback
