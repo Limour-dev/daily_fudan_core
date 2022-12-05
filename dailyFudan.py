@@ -33,6 +33,7 @@ def iyuu(IYUU_TOKEN):
     return send
 
 from ServerChan import ftqq
+import UIS_Captcha
 
 # fix random area bug
 def set_q(iterO):
@@ -48,7 +49,7 @@ class Fudan:
     """
     建立与复旦服务器的会话，执行登录/登出操作
     """
-    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:76.0) Gecko/20100101 Firefox/76.0"
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.62"
 
     # 初始化会话
     def __init__(self,
@@ -62,10 +63,34 @@ class Fudan:
         """
         self.session = session()
         self.session.headers['User-Agent'] = self.UA
+        self.session.verify = False
         self.url_login = url_login
 
         self.uid = uid
         self.psw = psw
+
+        self.headers = {
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "DNT": "1",
+            "Host": "uis.fudan.edu.cn",
+            "Origin": "https://uis.fudan.edu.cn",
+            "Pragma": "no-cache",
+            "sec-ch-ua": '"Microsoft Edge";v="107", "Chromium";v="107", "Not=A?Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+        self.headers.update({
+            "Referer"   : self.url_login,
+            "User-Agent": self.UA
+            
+        })
 
     def _page_init(self):
         """
@@ -107,19 +132,39 @@ class Fudan:
                         html.xpath("/html/body/form/input/@value")
                 )
         )
-
-        headers = {
-            "Host"      : "uis.fudan.edu.cn",
-            "Origin"    : "https://uis.fudan.edu.cn",
-            "Referer"   : self.url_login,
-            "User-Agent": self.UA
-        }
-
+        if UIS_Captcha.needCaptcha(self.session, self.headers, self.uid):
+            from captcha_break_dddd import dddd_3
+            for i in range(6):
+                tmp_res = UIS_Captcha.captcha(self.session, self.headers)
+                tmp_res = dddd_3(tmp_res)
+                data.update({
+                    'captchaResponse': tmp_res
+                    })
+                logging.debug("Login ing—— captcha")
+                post = self.session.post(
+                self.url_login,
+                data=data,
+                headers=self.headers,
+                allow_redirects=False)
+                logging.debug("return status code %d" % post.status_code)
+                if post.status_code == 302:
+                    logging.debug("登录成功")
+                    return True
+                elif post.status_code == 200:
+                    logging.debug("验证码错误")
+                else:
+                    logging.debug("登录失败，请检查账号信息")
+                    self.close()
+                    return False
+            logging.debug("验证码错误次数过多，请更换识别模块")
+            self.close()
+            return False
+                
         logging.debug("Login ing——")
         post = self.session.post(
                 self.url_login,
                 data=data,
-                headers=headers,
+                headers=self.headers,
                 allow_redirects=False)
 
         logging.debug("return status code %d" % post.status_code)
@@ -301,15 +346,16 @@ if __name__ == '__main__':
     psw = f_decode(psw)
     pwd = f_decode(pwd)
 
-    try:
-        from FDU_daily_fudan import dailyFudan
-        suc = dailyFudan(uid, psw, uname, pwd, iy_info, s_sfzx)
-    except:
-        suc = False
-        print(traceback.format_exc())
+    if (True):
+        try:
+            from FDU_daily_fudan import dailyFudan
+            suc = dailyFudan(uid, psw, uname, pwd, iy_info, s_sfzx)
+        except:
+            suc = False
+            print(traceback.format_exc())
 
-    if suc:
-        sys_exit()
+        if suc:
+            sys_exit()
 
     # logging.debug("ACCOUNT：" + uid + psw)
     zlapp_login = 'https://uis.fudan.edu.cn/authserver/login?' \

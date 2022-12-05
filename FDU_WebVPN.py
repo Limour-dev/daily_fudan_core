@@ -57,6 +57,7 @@ UA_WeChat_PC = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, l
 UA_Chrome = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
 
 import http.cookies as Cookie
+import UIS_Captcha
 
 class WebVPN:
     refresh = '0'
@@ -137,6 +138,47 @@ class WebVPN:
             "Referer"   : login_url,
             "User-Agent": self.UA
         }
+        headers.update({
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "DNT": "1",
+            "Pragma": "no-cache",
+            "sec-ch-ua": r'" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Requested-With": "XMLHttpRequest"
+            })
+        if UIS_Captcha.needCaptcha(self.session, headers, uid):
+            from captcha_break_dddd import dddd_3
+            for i in range(3):
+                tmp_res = UIS_Captcha.captcha(self.session, headers)
+                tmp_res = dddd_3(tmp_res)
+                data.update({
+                    'captchaResponse': tmp_res
+                    })
+                print("Login ing—— captcha")
+                post = self.session.post(
+                        login_url,
+                        data=data,
+                        headers=headers,
+                        allow_redirects=False)
+                print("return status code %d" % post.status_code)
+                if post.status_code == 302:
+                    print("登录成功")
+                    return post
+                elif post.status_code == 200:
+                    print("验证码错误")
+                else:
+                    print("登录失败，请检查账号信息")
+                    return post
+            print("验证码错误次数过多，请更换识别模块")
+            return post
+        
         post = self.session.post(
                 login_url,
                 data=data,
@@ -178,6 +220,47 @@ class WebVPN:
             "Referer"   : login_url,
             "User-Agent": self.UA
         }
+        headers.update({
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "DNT": "1",
+            "Pragma": "no-cache",
+            "sec-ch-ua": r'" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Requested-With": "XMLHttpRequest"
+            })
+        if UIS_Captcha.needCaptcha(self, headers, uid):
+            from captcha_break_dddd import dddd_3
+            for i in range(3):
+                tmp_res = UIS_Captcha.captcha(self, headers)
+                tmp_res = dddd_3(tmp_res)
+                data.update({
+                    'captchaResponse': tmp_res
+                    })
+                print("Login ing—— captcha")
+                post = self.session.post(
+                        login_url,
+                        data=data,
+                        headers=headers,
+                        allow_redirects=False)
+                print("return status code %d" % post.status_code)
+                if post.status_code == 302:
+                    print("登录成功")
+                    return post
+                elif post.status_code == 200:
+                    print("验证码错误")
+                else:
+                    print("登录失败，请检查账号信息")
+                    return post
+            print("验证码错误次数过多，请更换识别模块")
+            return post
+        
         post = self.post(
                 login_url,
                 data=data,

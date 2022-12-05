@@ -28,6 +28,11 @@ def dddd(image):
     print(f'dddd {res}')
     return res
 
+def dddd_3(image):
+    res = ocr.classification(image)
+    print(f'dddd_3 {res}')
+    return res.lower()
+
 if __name__ == "__main__":
     with open("01.jpg", 'rb') as f:
         image = f.read()
