@@ -316,6 +316,9 @@ def get_account():
 
 gl_info = "快去手动填写！"
 if __name__ == '__main__':
+    if True:
+        print("平安复旦已结束")
+        sys_exit(0)
     uid, psw, IYUU_TOKE = get_account()
     # print(f'Check_value: {Check_value}')
     if Check_value:
